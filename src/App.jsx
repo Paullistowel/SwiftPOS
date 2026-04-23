@@ -14,6 +14,7 @@ import Products from './pages/Products';
 import Inventory from './pages/Inventory';
 import Customers from './pages/Customers';
 import Reports from './pages/Reports';
+import Settings from './pages/Settings';
 import PaymentCallback from './pages/PaymentCallback';
 
 function ProtectedRoute({ children }) {
@@ -58,6 +59,7 @@ export default function App() {
         <Route path="/inventory" element={<ProtectedRoute><Inventory /></ProtectedRoute>} />
         <Route path="/customers" element={<ProtectedRoute><Customers /></ProtectedRoute>} />
         <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
+        <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
 
         {/* Payment callback (Paystack redirects here) */}
         <Route path="/payment/callback" element={<PaymentCallback />} />

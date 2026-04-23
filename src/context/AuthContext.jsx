@@ -56,16 +56,34 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
-  const fetchUser = async () => {
+  const fetchUser = async (attempt = 0) => {
     try {
       const { data } = await api.get('/api/auth/me');
       setUser(data.user);
-    } catch {
-      localStorage.removeItem('swift-pos-token');
-      localStorage.removeItem('swift-pos-user');
-      delete api.defaults.headers.common['Authorization'];
-    } finally {
       setLoading(false);
+    } catch (err) {
+      const status = err.response?.status;
+
+      // Real auth failure — token is genuinely bad. Clear it and go to login.
+      if (status === 401) {
+        localStorage.removeItem('swift-pos-token');
+        localStorage.removeItem('swift-pos-user');
+        delete api.defaults.headers.common['Authorization'];
+        setUser(null);
+        setLoading(false);
+        return;
+      }
+
+      // Transient failure (network blip, Neon cold-start, rate limit, 5xx):
+      // keep the token, retry in the background. Cap at 6 attempts (roughly
+      // 30 seconds of total wait) before giving up and showing login.
+      if (attempt < 6) {
+        setTimeout(() => fetchUser(attempt + 1), 3000 + attempt * 1000);
+        return;
+      }
+
+      console.warn('fetchUser: giving up after 6 transient failures, preserving token');
+      setLoading(false); // stop showing the page loader; keep token so interceptor can retry on next API call
     }
   };
 
@@ -144,8 +162,32 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const changePassword = async (currentPassword, newPassword) => {
+    const isDemoMode = localStorage.getItem('swift-pos-token') === 'demo-mode-token';
+    if (isDemoMode) {
+      throw new Error('Password change is not available in demo mode. Log in with a real backend account.');
+    }
+    const { data } = await api.put('/api/auth/change-password', {
+      currentPassword,
+      newPassword,
+    });
+    return data;
+  };
+
+  const changePin = async (currentPassword, newPin) => {
+    const isDemoMode = localStorage.getItem('swift-pos-token') === 'demo-mode-token';
+    if (isDemoMode) {
+      throw new Error('PIN change is not available in demo mode.');
+    }
+    const { data } = await api.put('/api/auth/change-pin', {
+      currentPassword,
+      newPin,
+    });
+    return data;
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, updateProfile }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, updateProfile, changePassword, changePin }}>
       {children}
     </AuthContext.Provider>
   );

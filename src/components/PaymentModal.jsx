@@ -4,8 +4,8 @@ import { QRCodeSVG } from 'qrcode.react';
 import api from '../services/api';
 import toast from 'react-hot-toast';
 
-// Paystack public key - loaded from env or hardcoded for demo
-const PAYSTACK_PUBLIC_KEY = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || 'pk_test_19ae24f6ee610c6880eac68a946c2b735842d88f';
+// Paystack public key - loaded from env, falls back to live key
+const PAYSTACK_PUBLIC_KEY = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || 'pk_live_f3f804944e08fb910df227c82895d52c172ffae0';
 
 // Load Paystack inline script
 const loadPaystackScript = () => {
